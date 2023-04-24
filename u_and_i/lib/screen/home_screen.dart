@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:async';
+import 'package:flutter/cupertino.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,58 +8,129 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ❷ State 정의
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController pageController = PageController();
-
-  @override
-  void initState() {
-    super.initState(); // ➌ 부모 initState() 실행
-
-    Timer.periodic(
-      // ➍ Timer.periodic() 등록
-      Duration(seconds: 3),
-      (timer) {
-        print('실행!');
-        int? nextPage = pageController.page?.toInt();
-
-        // ➋
-        if (nextPage == null) {
-          return;
-        }
-        // ➌
-        if (nextPage == 4) {
-          nextPage = 0;
-        } else {
-          nextPage++;
-        }
-        pageController.animateToPage(
-          // ➍ 페이지 변경
-          nextPage,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.ease,
-        );
-      },
-    );
-  }
+  DateTime firstDay = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-
     return Scaffold(
-      body: PageView(
-        controller: pageController,
-        // ➊ PageView 추가
-        children: [1, 2, 3, 4, 5] // ➋ 샘플 리스트 생성
-            .map(
-              // ➌ 위젯으로 매핑
-              (number) => Image.asset(
-                'asset/img/image_$number.jpeg',
-                fit: BoxFit.cover,
-              ),
-            )
-            .toList(),
+      backgroundColor: Colors.pink[100],
+      body: SafeArea(
+        // ➊ 시스템 UI 피해서 UI 그리기
+        top: true,
+        bottom: false,
+        child: Column(
+          // ➋ 위, 아래 끝에 위젯 배치
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+          // 반대 축 최대 크기로 늘리기
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _DDay(
+
+              // ➎ 하트 눌렀을때 실행할 함수 전달하기
+              onHeartPressed: onHeartPressed,
+              firstDay: firstDay,
+            ),
+            _CoupleImage(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void onHeartPressed(){  // ➍ 하트 눌렀을때 실행할 함수
+    showCupertinoDialog(  // ➋ 쿠퍼티노 다이얼로그 실행
+      context: context,
+      builder: (BuildContext context) {
+        return Align(  // ➊ 정렬을 지정하는 위젯
+          alignment: Alignment.bottomCenter,  // ➋ 아래 중간으로 정렬
+          child: Container(
+            color: Colors.white,  // 배경색 흰색 지정
+            height: 300,  // 높이 300 지정
+            child: CupertinoDatePicker(
+              mode: CupertinoDatePickerMode.dateAndTime,
+              onDateTimeChanged: (DateTime date) {
+                setState(() {
+                  firstDay = date;
+                });
+              },
+            ),
+          ),
+        );
+      },
+      barrierDismissible: true,
+    );
+  }
+}
+
+class _DDay extends StatelessWidget {
+  final GestureTapCallback onHeartPressed;
+  final DateTime firstDay;
+
+  _DDay({
+    required this.onHeartPressed,  // ➋ 상위에서 함수 입력받기
+    required this.firstDay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final now = DateTime.now();
+
+    return Column(
+      children: [
+        const SizedBox(height: 16.0),
+        Text(
+          // 최상단 U&I 글자
+          'U&I',
+          style: textTheme.headline1,
+        ),
+        const SizedBox(height: 16.0),
+        Text(
+          // 두번째 글자
+          '우리 처음 만난 날',
+          style: textTheme.bodyText1,
+        ),
+        Text(
+          // 임시로 지정한 만난 날짜
+          '${firstDay.year}.${firstDay.month}.${firstDay.day}',
+          style: textTheme.bodyText2,
+        ),
+        const SizedBox(height: 16.0),
+        IconButton(
+          // 하트 아이콘 버튼
+          iconSize: 60.0,
+          onPressed: onHeartPressed,
+          icon: Icon(
+            Icons.favorite,
+            color: Colors.red,
+          ),
+        ),
+        const SizedBox(height: 16.0),
+        Text(
+          // 만난 후 DDay
+          'D+${DateTime(now.year, now.month, now.day).difference(firstDay).inDays + 1}',
+          style: textTheme.headline2,
+        ),
+      ],
+    );
+  }
+}
+
+class _CoupleImage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      // Expanded 추가
+      child: Center(
+        // ➊ 이미지 중앙정렬
+        child: Image.asset(
+          'asset/img/middle_image.png',
+
+          // ➋ 화면의 반만큼 높이 구현
+          height: MediaQuery.of(context).size.height / 2,
+        ),
       ),
     );
   }
